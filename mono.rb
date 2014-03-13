@@ -47,7 +47,7 @@ class LCD
       0, 0, gray,
       width * dot_size, 0, gray,
       0, height * dot_size, gray,
-      width * dot_size, height * dot_size, gray,
+      width * dot_size, height * dot_size, gray
     )
   end
 
@@ -71,7 +71,7 @@ end
 
 class GameWindow < Gosu::Window
   def initialize
-    super 480, 480, false
+    super 320, 320, false
     self.caption = "Mono prototype"
   end
 
@@ -79,8 +79,12 @@ class GameWindow < Gosu::Window
     @lcd ||= LCD.new(32, 32, self)
   end
 
+  def game
+    @game ||= Game.new(lcd)
+  end
+
   def update
-    lcd.set(Random.rand(31), Random.rand(31), Random.rand(2) == 1)
+    game.update
   end
 
   def draw
@@ -88,5 +92,79 @@ class GameWindow < Gosu::Window
   end
 end
 
+
+
+class Game
+  def initialize(lcd)
+    @lcd = lcd
+  end
+
+  def update
+    @lcd.set(Random.rand(31), Random.rand(31), Random.rand(2) == 1)
+  end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 window = GameWindow.new
 window.show
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
