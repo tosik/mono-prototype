@@ -1,4 +1,5 @@
 require 'gosu'
+require 'matrix'
 
 class LCD
   def initialize(size_x, size_y, window)
@@ -43,6 +44,10 @@ class LCD
   end
 
   def clear
+    @bmp = Array.new(height).map { Array.new(width, false) }
+  end
+
+  def clear_color
     @window.draw_quad(
       0, 0, gray,
       width * dot_size, 0, gray,
@@ -52,18 +57,29 @@ class LCD
   end
 
   def draw
-    clear
+    clear_color
     height.times do |y|
       width.times do |x|
         xx = x * dot_size
         yy = y * dot_size
-        s = dot_size - 3
+        s = dot_size - 2
         @window.draw_quad(
           xx    , yy    , color(x, y),
           xx + s, yy    , color(x, y),
           xx    , yy + s, color(x, y),
           xx + s, yy + s, color(x, y)
         )
+      end
+    end
+  end
+
+  def draw_sprite(sprite)
+    sprite.bmp.length.times do |y|
+      sprite.bmp.first.length.times do |x|
+        color = sprite.bmp[y][x]
+        if color > 0
+          set(sprite.x.to_i + x, sprite.y.to_i + y, color == 1)
+        end
       end
     end
   end
@@ -80,7 +96,10 @@ class GameWindow < Gosu::Window
   end
 
   def game
-    @game ||= Game.new(lcd)
+    #@game ||= Game.new(lcd)
+    #@game ||= Game.new(lcd)
+    #@game ||= Game.new(lcd)
+    @game ||= DangerousOcean.new(lcd)
   end
 
   def update
@@ -93,14 +112,59 @@ class GameWindow < Gosu::Window
 end
 
 
-
 class Game
   def initialize(lcd)
     @lcd = lcd
   end
 
   def update
-    @lcd.set(Random.rand(31), Random.rand(31), Random.rand(2) == 1)
+  end
+end
+
+
+class Sprite
+  attr_accessor :x, :y
+  attr_accessor :bmp
+
+  def initialize(size_x, size_y)
+    @bmp = Array.new(size_y) { Array.new(size_x) }
+  end
+end
+
+class Ship < Sprite
+  def initialize
+    super(6, 12)
+
+    @x = 0
+    @y = 0
+
+    @bmp = [
+      [0,1,1,0],
+      [1,1,1,1],
+      [1,1,1,1],
+      [1,1,1,1],
+      [1,1,1,1],
+      [1,1,1,1],
+      [1,1,1,1],
+      [0,1,1,0],
+    ]
+  end
+end
+
+class DangerousOcean < Game
+  def update
+    @lcd.clear
+    draw_ship
+
+    ship.x += 0.1
+  end
+
+  def ship
+    @ship ||= Ship.new
+  end
+
+  def draw_ship
+    @lcd.draw_sprite(ship)
   end
 end
 
