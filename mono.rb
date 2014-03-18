@@ -9,6 +9,7 @@ class LCD
 
   def set(x, y, color)
     @bmp[y][x] = color
+  rescue
   end
 
   def get(x, y)
@@ -56,6 +57,10 @@ class LCD
     )
   end
 
+  def blackout
+    @bmp = Array.new(height).map { Array.new(width, true) }
+  end
+
   def draw
     clear_color
     height.times do |y|
@@ -86,6 +91,8 @@ class LCD
 end
 
 class GameWindow < Gosu::Window
+  attr_accessor :last_key_id
+
   def initialize
     super 320, 320, false
     self.caption = "Mono prototype"
@@ -109,12 +116,31 @@ class GameWindow < Gosu::Window
   def draw
     lcd.draw
   end
+
+  def button_down(id)
+    @last_key_id = id
+    @game.last_key_id = @last_key_id
+  end
+
+  def button_up(id)
+    if @last_key_id == id
+      @last_key_id = nil
+      @game.last_key_id = last_key_id
+    end
+  end
 end
 
 
 class Game
+  attr_accessor :last_key_id
+
   def initialize(lcd)
     @lcd = lcd
+    start
+  end
+
+  def input(id)
+    @last_key_id = id
   end
 
   def update
@@ -122,41 +148,168 @@ class Game
 end
 
 
+class Rectangle
+  attr_accessor :x, :y, :width, :height
+
+  def initialize(x, y, width, height)
+    @x = x
+    @y = y
+    @width = width
+    @height = height
+  end
+
+  def intersect?(rect)
+    [@x, rect.x].max <= [@x + @width, rect.x + rect.width].min &&
+    [@y, rect.y].max <= [@y + @height, rect.y + rect.height].min
+  end
+end
+
 class Sprite
   attr_accessor :x, :y
-  attr_accessor :bmp
 
-  def initialize(size_x, size_y)
-    @bmp = Array.new(size_y) { Array.new(size_x) }
+  def width
+    bmp.size
+  end
+
+  def height
+    bmp.first.size
+  end
+
+  def rect
+    Rectangle.new(x, y, width, height)
+  end
+
+  def hit?(sprite)
+    rect.intersect?(sprite.rect)
   end
 end
 
 class Ship < Sprite
-  def initialize
-    super(6, 12)
+  attr_accessor :accel
+  attr_accessor :velocity
 
+  def initialize
     @x = 0
     @y = 0
 
-    @bmp = [
-      [0,1,1,0],
-      [1,1,1,1],
-      [1,1,1,1],
-      [1,1,1,1],
-      [1,1,1,1],
-      [1,1,1,1],
-      [1,1,1,1],
-      [0,1,1,0],
+    @accel = 0
+    @velocity = 0
+  end
+
+  def update
+    @velocity += accel
+    @x += @velocity
+  end
+
+  def bmp
+    if velocity < -0.1
+      bmp_left
+    elsif velocity > 0.1
+      bmp_right
+    else
+      bmp_front
+    end
+  end
+
+  def bmp_front
+    [
+      [0,0,1,1,0,0],
+      [0,1,1,1,1,0],
+      [0,1,1,1,1,0],
+      [0,1,1,1,1,0],
+      [0,1,1,1,1,0],
+      [0,1,1,1,1,0],
+      [0,1,1,1,1,0],
+      [0,0,1,1,0,0],
+    ]
+  end
+
+  def bmp_right
+    [
+      [0,0,0,1,1,0],
+      [0,0,1,1,1,1],
+      [0,0,1,1,1,1],
+      [0,1,1,1,1,0],
+      [0,1,1,1,1,0],
+      [1,1,1,1,0,0],
+      [1,1,1,1,0,0],
+      [0,1,1,0,0,0],
+    ]
+  end
+
+  def bmp_left
+    [
+      [0,1,1,0,0,0],
+      [1,1,1,1,0,0],
+      [1,1,1,1,0,0],
+      [0,1,1,1,1,0],
+      [0,1,1,1,1,0],
+      [0,0,1,1,1,1],
+      [0,0,1,1,1,1],
+      [0,0,0,1,1,0],
+    ]
+  end
+end
+
+class Obstacle < Sprite
+  def initialize(x)
+    @x = x
+    @y = 0
+  end
+
+  def update
+    @y += 0.8
+  end
+
+  def bmp
+    [
+      [0,1,0],
+      [1,1,1],
+      [0,1,0],
     ]
   end
 end
 
 class DangerousOcean < Game
+  def start
+    ship.x = 14
+    ship.y = 22
+
+    @obstacles = []
+  end
+
   def update
     @lcd.clear
     draw_ship
 
-    ship.x += 0.1
+    ship.accel = ship_accel
+    ship.update
+
+    if Random.rand(30) == 1
+      @obstacles.push Obstacle.new(Random.rand(32))
+    end
+
+    @obstacles.clone.each do |obstacle|
+      obstacle.update
+      @lcd.draw_sprite obstacle
+      if obstacle.y > 32
+        @obstacles.delete(obstacle)
+      end
+
+      if obstacle.hit?(ship)
+        #@lcd.blackout
+      end
+    end
+  end
+
+  def ship_accel
+    if @last_key_id == Gosu::KbLeft
+      -0.05
+    elsif @last_key_id == Gosu::KbRight
+      0.05
+    else
+      0
+    end
   end
 
   def ship
