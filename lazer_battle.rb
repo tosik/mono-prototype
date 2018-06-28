@@ -1,5 +1,4 @@
-
-class Pod < Sprite
+class Entity < Sprite
   attr_accessor :logical_x
   attr_accessor :logical_y
 
@@ -12,7 +11,9 @@ class Pod < Sprite
     @x = logical_x * 5
     @y = logical_y * 5
   end
+end
 
+class Pod < Entity
   def bmp
     [
       [0,1,1,1,0],
@@ -24,9 +25,61 @@ class Pod < Sprite
   end
 end
 
+class Arrow < Entity
+end
+
+class ArrowLeft < Arrow
+  def bmp
+    [
+      [0,0,1,0,0],
+      [0,1,1,1,1],
+      [1,1,1,1,1],
+      [0,1,1,1,1],
+      [0,0,1,0,0],
+    ]
+  end
+end
+
+class ArrowRight < Arrow
+  def bmp
+    [
+      [0,0,1,0,0],
+      [1,1,1,1,0],
+      [1,1,1,1,1],
+      [1,1,1,1,0],
+      [0,0,1,0,0],
+    ]
+  end
+end
+
+class ArrowUp < Arrow
+  def bmp
+    [
+      [0,0,1,0,0],
+      [0,1,1,1,0],
+      [1,1,1,1,1],
+      [0,1,1,1,0],
+      [0,1,1,1,0],
+    ]
+  end
+end
+
+class ArrowDown < Arrow
+  def bmp
+    [
+      [0,1,1,1,0],
+      [0,1,1,1,0],
+      [1,1,1,1,1],
+      [0,1,1,1,0],
+      [0,0,1,0,0],
+    ]
+  end
+end
+
 class LazerBattle < Game
   def start
     @pods = [Pod.new(1, 2), Pod.new(3, 4)]
+    @arrows = [ArrowLeft.new(10, 15), ArrowRight.new(9, 18), ArrowUp.new(2, 8), ArrowDown.new(6, 3)]
   end
 
   def update
@@ -39,7 +92,12 @@ class LazerBattle < Game
 
     @pods.each do |pod|
       pod.update
-      draw_pod(pod)
+      draw_entity(pod)
+    end
+
+    @arrows.each do |arrow|
+      arrow.update
+      draw_entity(arrow)
     end
   end
 
@@ -57,7 +115,8 @@ class LazerBattle < Game
     end
   end
 
-  def draw_pod(pod)
-    @lcd.draw_sprite(pod)
+  def draw_entity(entity)
+    @lcd.draw_sprite(entity)
   end
 end
+
