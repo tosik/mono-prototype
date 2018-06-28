@@ -94,19 +94,20 @@ class GameWindow < Gosu::Window
   attr_accessor :last_key_id
 
   def initialize
-    super 320, 320, false
+    super 320 * 4, 320 * 4, false
     self.caption = "Mono prototype"
   end
 
   def lcd
-    @lcd ||= LCD.new(32, 32, self)
+    @lcd ||= LCD.new(32 * 4, 32 * 4, self)
   end
 
   def game
     #@game ||= Game.new(lcd)
     #@game ||= Game.new(lcd)
     #@game ||= Game.new(lcd)
-    @game ||= DangerousOcean.new(lcd)
+    #@game ||= DangerousOcean.new(lcd)
+    @game ||= LazerBattle.new(lcd)
   end
 
   def update
@@ -321,67 +322,8 @@ class DangerousOcean < Game
   end
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+require './lazer_battle.rb'
 
 window = GameWindow.new
 window.show
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
